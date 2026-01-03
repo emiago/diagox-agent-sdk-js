@@ -1,0 +1,39 @@
+{
+  "name": "@emiago/diagox-agent-sdk",
+  "version": "0.1.0",
+  "description": "Official SDK for Diagox Agent API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "sdk",
+    "api",
+    "client",
+    "typescript"
+  ],
+  "author": "Emir Aganovic",
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emiago/diagox-agent-sdk-js.git"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  }
+}
