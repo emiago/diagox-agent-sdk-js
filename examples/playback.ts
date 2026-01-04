@@ -1,5 +1,11 @@
 import { AgentRPCClient, AgentRequest } from "../src/index";
 
+const originalLog = console.log;
+console.log = (...data: any[]) => {
+  const timestamp = new Date().toISOString();
+  originalLog(timestamp, ...data);
+}
+
 async function main() {
   const client = new AgentRPCClient({ url: 'ws://localhost:6000', endpoint: 'myagent' });
 

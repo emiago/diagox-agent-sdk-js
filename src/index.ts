@@ -3,6 +3,15 @@
 
 import WebSocket from "ws";
 import { v4 as uuidv4 } from 'uuid';
+import debug from 'debug';
+
+
+// Use DEBUG=diagox-agent-sdk to have logging
+const _log = debug('diagox-agent-sdk');
+const log = (...data: any[]) => {
+  const timestamp = new Date().toISOString();
+  _log(timestamp, ...data);
+}
 
 /**
  * Request message format
@@ -45,12 +54,12 @@ export class AgentRPCClient {
 
   constructor(private opts: AgentRPCClientOptions) {
     this.onInviteCb = (request: AgentRequest) => {
-      console.log("Invite received, but no onInvite handler attached")
+      log("Invite received, but no onInvite handler attached")
       this.sendResponse(request.id, 599, "No handler attached");
     };
 
     this.onByeCb = (request: AgentRequest) => {
-      console.debug("Bye received, responding OK");
+      log("Bye received, responding OK");
       this.sendResponse(request.id, 200, "OK");
     };
   }
@@ -124,7 +133,7 @@ export class AgentRPCClient {
       throw new Error("not connected");
     }
 
-    console.log("Send message", msg);
+    log("Send message", msg);
     this.ws.send(JSON.stringify(msg));
   }
 
@@ -148,7 +157,7 @@ export class AgentRPCClient {
 
   private handleMessage(raw: string) {
     const message = JSON.parse(raw);
-    console.log("New message", message);
+    log("New message", message);
 
     // Hande Request or Response
     if (!message.code || message.code === 0) {
@@ -178,7 +187,6 @@ export class AgentRPCClient {
 
 
   private transactionRequest(req: AgentRequest, callback: ResponseCallback): void {
-    console.log("Doing transaction request", req);
     if (req.id == "") {
       throw new Error("Request ID is missing");
     }

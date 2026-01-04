@@ -1,5 +1,8 @@
-# bun-backend
+# Diagox Agent SDK
 
+This is diagox agent sdk for nodejs folks
+
+## Setup
 To install dependencies:
 
 ```bash
@@ -12,4 +15,7 @@ To run:
 bun run src/index.ts
 ```
 
-This project was created using `bun init` in bun v1.3.5. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+
+## Debuging 
+
+Use `DEBUG=diagox-agent-sdk` to have logging for debuging
