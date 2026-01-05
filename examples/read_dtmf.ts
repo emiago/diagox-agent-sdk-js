@@ -14,11 +14,11 @@ async function main() {
     try {
       // Accept the dialog
       const session = await client.acceptDialog(request);
-      console.log(`Dialog ${session.dialogId} accepted`);
+      console.log(`Dialog accepted: did=${session.dialogId}`);
 
       // Before any media action you need to answer dialog first
       const answerResponse = await session.request('answer');
-      console.log(`Answer response for ${session.dialogId}:`, answerResponse);
+      console.log(`Answer: did=${session.dialogId} response=${answerResponse.reason}`);
       if (answerResponse.code !== 200) {
         throw new Error("Answering failed");
       }
@@ -32,10 +32,10 @@ async function main() {
       }
 
       const readDtmfData = readDtmfResponse.data as { dtmf: string }
-      console.log("DTMF read", readDtmfData.dtmf);
+      console.log(`DTMF Read: did=${session.dialogId} response:${readDtmfResponse.reason} dtmf=${readDtmfData.dtmf}`);
 
       const hangupResponse = await session.request('hangup');
-      console.log(`Hangup response for ${session.dialogId}:`, hangupResponse);
+      console.log(`Hangup: did=${session.dialogId} response: ${hangupResponse.reason}`);
     } catch (error) {
       console.error(`Error handling dialog ${request.did}:`, error);
     }

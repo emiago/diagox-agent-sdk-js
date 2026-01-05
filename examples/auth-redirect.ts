@@ -17,32 +17,40 @@ async function main() {
       const inviteData = request.data as { callID: string, from: string, to: string }
       console.log(`Dialog accepted: did=${session.dialogId} from=${inviteData.from} to=${inviteData.to}`);
 
-      // Now you can use this session to send requests
-      const ringResponse = await session.request('ring');
-      console.log(`Ringing: did=${session.dialogId} response=${ringResponse.reason}`);
-      if (ringResponse.code !== 200) {
-        throw new Error("Ringing failed");
-      }
-
+      // Before any media action you need to answer dialog first
       const answerResponse = await session.request('answer');
       console.log(`Answer: did=${session.dialogId} response=${answerResponse.reason}`);
       if (answerResponse.code !== 200) {
-        throw new Error("Answering failed");
+        throw new Error("Answering failed: " + answerResponse.reason);
       }
 
-      // This will block until playback is terminated
-      const playResponse = await session.request('play', {
-        uri: 'https://mauvecloud.net/sounds/pcm1608m.wav'
-      }, (response) => {
-        console.log(`Playback info: (${response.code}) ${response.reason}`);
+      // Read DTMF
+      const readDtmfResponse = await session.request('read_dtmf', {
+        duration_sec: 10,
+        termination: '#',
       });
-      console.log(`Play finished: did=${session.dialogId} response=${playResponse.reason}`);
-      if (playResponse.code !== 200) {
-        throw new Error("Playback failed");
+      if (readDtmfResponse.code !== 200) {
+        throw new Error("Read DTMF failed: " + readDtmfResponse.reason);
+      }
+      const readDtmfData = readDtmfResponse.data as { dtmf: string }
+      console.log(`DTMF Read: did=${session.dialogId} response:${readDtmfResponse.reason} dtmf=${readDtmfData.dtmf}`);
+
+      // Authenticate user and redirect to voicebot
+      if (readDtmfData.dtmf == "1234" || readDtmfData.dtmf == "1234#") {
+        console.log("User authenticated, redirecting to VoiceBot")
+
+        const redirectResponse = await session.request(`redirect`, { endpoint: "voicebot" })
+        if (redirectResponse.code !== 200) {
+          throw new Error("Redirecting failed: " + redirectResponse.reason);
+        }
+        return
       }
 
+      console.log("User was not authenticated, hanguping..")
       const hangupResponse = await session.request('hangup');
-      console.log(`Hanguped: did=${session.dialogId} response=${hangupResponse.reason}`);
+      if (hangupResponse.code !== 200) {
+        throw new Error("Hangup failed: " + hangupResponse.reason);
+      }
     } catch (error) {
       console.error(`Error handling dialog ${request.did}:`, error);
     }
