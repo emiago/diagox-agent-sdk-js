@@ -187,16 +187,13 @@ export class AgentRPCClient {
     if (callback) {
       callback(response);
     }
-
-    if (response.code >= 200) {
-      this.pendingTransactions.delete(response.id);
-    }
   }
 
   private handleMessageBinary(binData: Buffer) {
     const dataType = binData.readInt8(0);
     const idlen = binData.readInt32BE(1);
     const requestID = binData.toString('utf8', 5, 5 + idlen);
+    log("New binary data", "req.id", requestID, "idlen", idlen);
     const bufData = binData.subarray(5 + idlen, binData.length)
     const callback = this.pendingBinaryData.get(requestID);
     if (callback) {
@@ -243,10 +240,14 @@ export class AgentRPCClient {
     this.pendingTransactions.set(req.id, (response: AgentResponse) => {
       clearTimeout(timeoutHandle);
       callback(response);
+      if (response.code >= 200) {
+        this.pendingTransactions.delete(response.id);
+      }
     });
 
     this.pendingBinaryData.set(req.id, (t: number, data: Buffer) => {
       callbackBin(t, data);
+      this.pendingBinaryData.delete(req.id);
     });
 
     this.send(req);
