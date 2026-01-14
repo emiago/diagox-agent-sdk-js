@@ -20,7 +20,7 @@ async function main() {
       const answerResponse = await session.request('answer');
       console.log(`Answer: did=${session.dialogId} response=${answerResponse.reason}`);
       if (answerResponse.code !== 200) {
-        throw new Error("Answering failed");
+        throw new Error(`Answering failed resID=${answerResponse.id} did=${answerResponse.did}`);
       }
 
       const readDtmfResponse = await session.request('read_dtmf', {

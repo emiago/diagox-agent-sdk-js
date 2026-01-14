@@ -9,14 +9,11 @@ To install dependencies:
 bun install
 ```
 
-## Examples
 
-Best to see usage is checking out [/examples](/examples/) dir.  
-Run any example like:
-```sh
-bun run examples/playback.ts
-```
 
+## Getting Started
+
+Small example what is needed to connect and run. It is expected that you have endpoint `myagent` configured.
 
 ```ts 
 const client = new AgentRPCClient({ url: 'ws://localhost:6000', endpoint: 'myagent' });
@@ -44,6 +41,21 @@ client.onInvite(async (request: AgentRequest) => {
 // Connect to diagox and listen 
 await client.connectAndListen();
 ```
+
+## Examples
+
+You can find more examples on [/examples](/examples/).
+
+For examples you need diagox running 
+`CONF_FILE=examples/diagox-agent.yaml diagox` 
+
+
+Run any example like:
+```sh
+bun run examples/playback.ts
+bun run examples/read_dtmf.ts
+```
+
 
 ## Debuging 
 

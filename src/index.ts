@@ -42,7 +42,8 @@ type AgentRPCClientOptions = {
 type MessageHandler = (text: string) => void;
 type RequestCallback = (req: AgentRequest) => void;
 type ResponseCallback = (response: AgentResponse) => void;
-type TransactionRequestHandler = (req: AgentRequest, callback: ResponseCallback) => void
+type BinaryCallback = (dataType: number, data: Buffer) => void
+type TransactionRequestHandler = (req: AgentRequest, callback: ResponseCallback, callbackBin?: BinaryCallback) => void
 
 export class AgentRPCClient {
   private ws?: WebSocket;
@@ -50,6 +51,7 @@ export class AgentRPCClient {
   private onInviteCb: RequestCallback;
   private onByeCb: RequestCallback;
   private pendingTransactions: Map<string, ResponseCallback> = new Map();
+  private pendingBinaryData: Map<string, BinaryCallback> = new Map();
   private dialogs: Map<string, DialogSession> = new Map();
 
   constructor(private opts: AgentRPCClientOptions) {
@@ -76,9 +78,8 @@ export class AgentRPCClient {
         resolve();
       });
 
-      ws.on("message", (data) => {
-        this.handleMessage(data.toString());
-      });
+      ws.on("message", this.handleMessage.bind(this));
+
 
       ws.on("error", reject);
     });
@@ -95,9 +96,7 @@ export class AgentRPCClient {
       // ws.on("open", () => {
       // });
 
-      ws.on("message", (data) => {
-        this.handleMessage(data.toString());
-      });
+      ws.on("message", this.handleMessage.bind(this));
       ws.on("error", reject);
       ws.on('close', reject);
     });
@@ -155,7 +154,16 @@ export class AgentRPCClient {
     this.send(response);
   }
 
-  private handleMessage(raw: string) {
+  private handleMessage(data: WebSocket.RawData, isBinary: boolean) {
+    if (isBinary) {
+      const binData = data as Buffer;
+      this.handleMessageBinary(binData);
+      return;
+    }
+    this.handleMessageJSON(data.toString());
+  }
+
+  private handleMessageJSON(raw: string) {
     const message = JSON.parse(raw);
     log("New message", message);
 
@@ -185,6 +193,18 @@ export class AgentRPCClient {
     }
   }
 
+  private handleMessageBinary(binData: Buffer) {
+    const dataType = binData.readInt8(0);
+    const idlen = binData.readInt32BE(1);
+    const requestID = binData.toString('utf8', 5, 5 + idlen);
+    const bufData = binData.subarray(5 + idlen, binData.length)
+    const callback = this.pendingBinaryData.get(requestID);
+    if (callback) {
+      callback(dataType, bufData);
+    }
+    return;
+  }
+
 
   private transactionRequest(req: AgentRequest, callback: ResponseCallback): void {
     if (req.id == "") {
@@ -202,8 +222,36 @@ export class AgentRPCClient {
       clearTimeout(timeoutHandle);
       callback(response);
     });
+
     this.send(req);
   }
+
+  // Experimental: transaction with Binary Data 
+  private transactionRequestBinary(req: AgentRequest, callback: ResponseCallback, callbackBin: BinaryCallback): void {
+    if (req.id == "") {
+      throw new Error("Request ID is missing");
+    }
+
+    // For every request we expect to have some provisional or final response
+    const provisionalTimeout = 10000;
+    const timeoutHandle = setTimeout(() => {
+      this.pendingTransactions.delete(req.id);
+      this.pendingBinaryData.delete(req.id);
+      throw new Error(`Request timeout after ${provisionalTimeout}ms for operation: ${req.op}`);
+    }, provisionalTimeout);
+
+    this.pendingTransactions.set(req.id, (response: AgentResponse) => {
+      clearTimeout(timeoutHandle);
+      callback(response);
+    });
+
+    this.pendingBinaryData.set(req.id, (t: number, data: Buffer) => {
+      callbackBin(t, data);
+    });
+
+    this.send(req);
+  }
+
   /**
  * Accept a pending invite and get a DialogSession
  */
@@ -213,7 +261,11 @@ export class AgentRPCClient {
 
     // Create dialog session
     const dialogId = request.did;
-    const session = new DialogSession(dialogId, (req: AgentRequest, cb: ResponseCallback) => {
+    const session = new DialogSession(dialogId, (req: AgentRequest, cb: ResponseCallback, binCb?: BinaryCallback) => {
+      if (binCb) {
+        this.transactionRequestBinary(req, cb, binCb);
+        return;
+      }
       this.transactionRequest(req, cb);
     });
 
@@ -268,4 +320,36 @@ export class DialogSession {
     })
   }
 
+
+  // NOTE: Binary data handling may not be supported.
+  public async requestBinary(
+    op: string,
+    onBinaryData: BinaryCallback,
+    data?: Record<string, any>,
+    onProvisional?: ResponseCallback,
+  ): Promise<AgentResponse> {
+    const requestId = uuidv4();
+    const request: AgentRequest = {
+      id: requestId,
+      did: this.dialogId,
+      op: op,
+      data: data,
+    };
+
+    return new Promise((resolve, reject) => {
+      try {
+        this.transactionRequest(request, (response: AgentResponse) => {
+          if (response.code < 200) {
+            if (onProvisional) {
+              onProvisional(response);
+            }
+            return;
+          }
+          resolve(response);
+        }, onBinaryData)
+      } catch (error) {
+        reject(error);
+      }
+    })
+  }
 }
