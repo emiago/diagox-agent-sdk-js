@@ -88,7 +88,6 @@ export class AgentRPCClient {
    * Connects and listens until WS connection is dropped
    */
   connectAndListen(): Promise<void> {
-    const ws = new WebSocket(this.opts.url);
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`${this.opts.url}?endpoint=${this.opts.endpoint}`);
       this.ws = ws;

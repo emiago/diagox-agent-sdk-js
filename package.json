@@ -4,10 +4,12 @@
   "description": "Official SDK for Diagox Agent RPC API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js"
+      "require": "./dist/index.js",
+      "import": "./dist/index.js"
     }
   },
   "files": [
@@ -36,6 +38,13 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/debug": "^4.1.12",
+    "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "debug": "^4.4.3",
+    "uuid": "^13.0.0",
+    "ws": "^8.19.0"
   }
 }

@@ -24,7 +24,7 @@ async function main() {
       }
 
       const readDtmfResponse = await session.request('read_dtmf', {
-        duration_sec: 10,
+        duration_sec: 5,
         termination: '#',
       });
       if (readDtmfResponse.code !== 200) {
