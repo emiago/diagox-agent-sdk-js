@@ -1,7 +1,7 @@
 {
   "name": "@emiago/diagox-agent-sdk",
   "version": "0.1.0",
-  "description": "Official SDK for Diagox Agent API",
+  "description": "Official SDK for Diagox Agent RPC API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -21,13 +21,14 @@
     "prepare": "npm run build"
   },
   "keywords": [
+    "diagox",
     "sdk",
     "api",
     "client",
     "typescript"
   ],
   "author": "Emir Aganovic",
-  "license": "MPL-2.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/emiago/diagox-agent-sdk-js.git"
