@@ -1,6 +1,6 @@
-# Diagox Agent SDK
+# Diagox Flow API SDK
 
-This is diagox agent API sdk for NodeJS folks.
+This is diagox Flow API SDK for NodeJS folks.
 
 ## Setup
 To install dependencies:
@@ -16,9 +16,9 @@ bun install
 Small example what is needed to connect and run. It is expected that you have endpoint `myagent` configured.
 
 ```ts 
-const client = new AgentRPCClient({ url: 'ws://localhost:6000', endpoint: 'myagent' });
+const client = new FlowClient({ url: 'ws://localhost:6000', endpoint: 'myagent' });
 
-client.onInvite(async (request: AgentRequest) => {
+client.onInvite(async (request: Request) => {
     try {
         // Accept the dialog
         const session = await client.acceptDialog(request);

@@ -16,7 +16,7 @@ const log = (...data: any[]) => {
 /**
  * Request message format
  */
-export interface AgentRequest {
+export interface Request {
   id: string;
   did: string;
   op: string;
@@ -26,7 +26,7 @@ export interface AgentRequest {
 /**
  * Response message format
  */
-export interface AgentResponse {
+export interface Response {
   id: string;
   did: string;
   code: number;
@@ -34,18 +34,18 @@ export interface AgentResponse {
   data?: Record<string, any>;
 }
 
-type AgentRPCClientOptions = {
+type CallFlowClientOptions = {
   url: string;
   endpoint: string;
 };
 
 type MessageHandler = (text: string) => void;
-type RequestCallback = (req: AgentRequest) => void;
-type ResponseCallback = (response: AgentResponse) => void;
+type RequestCallback = (req: Request) => void;
+type ResponseCallback = (response: Response) => void;
 type BinaryCallback = (dataType: number, data: Buffer) => void
-type TransactionRequestHandler = (req: AgentRequest, callback: ResponseCallback, callbackBin?: BinaryCallback) => void
+type TransactionRequestHandler = (req: Request, callback: ResponseCallback, callbackBin?: BinaryCallback) => void
 
-export class AgentRPCClient {
+export class FlowClient {
   private ws?: WebSocket;
   private onMessage?: MessageHandler;
   private onInviteCb: RequestCallback;
@@ -54,13 +54,13 @@ export class AgentRPCClient {
   private pendingBinaryData: Map<string, BinaryCallback> = new Map();
   private dialogs: Map<string, DialogSession> = new Map();
 
-  constructor(private opts: AgentRPCClientOptions) {
-    this.onInviteCb = (request: AgentRequest) => {
+  constructor(private opts: CallFlowClientOptions) {
+    this.onInviteCb = (request: Request) => {
       log("Invite received, but no onInvite handler attached")
       this.sendResponse(request.id, 599, "No handler attached");
     };
 
-    this.onByeCb = (request: AgentRequest) => {
+    this.onByeCb = (request: Request) => {
       log("Bye received, responding OK");
       this.sendResponse(request.id, 200, "OK");
     };
@@ -143,7 +143,7 @@ export class AgentRPCClient {
       throw new Error('Not connected to agent server');
     }
 
-    const response: AgentResponse = {
+    const response: Response = {
       id: requestId,
       did: '', // Not needed for invite response
       code: code,
@@ -168,7 +168,7 @@ export class AgentRPCClient {
 
     // Hande Request or Response
     if (!message.code || message.code === 0) {
-      const request = message as AgentRequest;
+      const request = message as Request;
       if (request.op == "invite") {
         this.onInviteCb(request);
         return;
@@ -181,7 +181,7 @@ export class AgentRPCClient {
       return;
     }
 
-    const response = message as AgentResponse;
+    const response = message as Response;
     const callback = this.pendingTransactions.get(response.id);
     if (callback) {
       callback(response);
@@ -202,7 +202,7 @@ export class AgentRPCClient {
   }
 
 
-  private transactionRequest(req: AgentRequest, callback: ResponseCallback): void {
+  private transactionRequest(req: Request, callback: ResponseCallback): void {
     if (req.id == "") {
       throw new Error("Request ID is missing");
     }
@@ -214,7 +214,7 @@ export class AgentRPCClient {
       throw new Error(`Request timeout after ${provisionalTimeout}ms for operation: ${req.op}`);
     }, provisionalTimeout);
 
-    this.pendingTransactions.set(req.id, (response: AgentResponse) => {
+    this.pendingTransactions.set(req.id, (response: Response) => {
       clearTimeout(timeoutHandle);
       callback(response);
     });
@@ -223,7 +223,7 @@ export class AgentRPCClient {
   }
 
   // Experimental: transaction with Binary Data 
-  private transactionRequestBinary(req: AgentRequest, callback: ResponseCallback, callbackBin: BinaryCallback): void {
+  private transactionRequestBinary(req: Request, callback: ResponseCallback, callbackBin: BinaryCallback): void {
     if (req.id == "") {
       throw new Error("Request ID is missing");
     }
@@ -236,7 +236,7 @@ export class AgentRPCClient {
       throw new Error(`Request timeout after ${provisionalTimeout}ms for operation: ${req.op}`);
     }, provisionalTimeout);
 
-    this.pendingTransactions.set(req.id, (response: AgentResponse) => {
+    this.pendingTransactions.set(req.id, (response: Response) => {
       clearTimeout(timeoutHandle);
       callback(response);
       if (response.code >= 200) {
@@ -255,13 +255,13 @@ export class AgentRPCClient {
   /**
  * Accept a pending invite and get a DialogSession
  */
-  public async acceptDialog(request: AgentRequest): Promise<DialogSession> {
+  public async acceptDialog(request: Request): Promise<DialogSession> {
     // Send 200 OK response to invite
     this.sendResponse(request.id, 200, 'OK');
 
     // Create dialog session
     const dialogId = request.did;
-    const session = new DialogSession(dialogId, (req: AgentRequest, cb: ResponseCallback, binCb?: BinaryCallback) => {
+    const session = new DialogSession(dialogId, (req: Request, cb: ResponseCallback, binCb?: BinaryCallback) => {
       if (binCb) {
         this.transactionRequestBinary(req, cb, binCb);
         return;
@@ -294,9 +294,9 @@ export class DialogSession {
     op: string,
     data?: Record<string, any>,
     onProvisional?: ResponseCallback,
-  ): Promise<AgentResponse> {
+  ): Promise<Response> {
     const requestId = uuidv4();
-    const request: AgentRequest = {
+    const request: Request = {
       id: requestId,
       did: this.dialogId,
       op: op,
@@ -305,7 +305,7 @@ export class DialogSession {
 
     return new Promise((resolve, reject) => {
       try {
-        this.transactionRequest(request, (response: AgentResponse) => {
+        this.transactionRequest(request, (response: Response) => {
           if (response.code < 200) {
             if (onProvisional) {
               onProvisional(response);
@@ -327,9 +327,9 @@ export class DialogSession {
     onBinaryData: BinaryCallback,
     data?: Record<string, any>,
     onProvisional?: ResponseCallback,
-  ): Promise<AgentResponse> {
+  ): Promise<Response> {
     const requestId = uuidv4();
-    const request: AgentRequest = {
+    const request: Request = {
       id: requestId,
       did: this.dialogId,
       op: op,
@@ -338,7 +338,7 @@ export class DialogSession {
 
     return new Promise((resolve, reject) => {
       try {
-        this.transactionRequest(request, (response: AgentResponse) => {
+        this.transactionRequest(request, (response: Response) => {
           if (response.code < 200) {
             if (onProvisional) {
               onProvisional(response);

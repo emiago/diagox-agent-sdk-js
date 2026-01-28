@@ -1,4 +1,4 @@
-import { AgentRPCClient, AgentRequest } from "../src/index";
+import { FlowClient, Request } from "../src/index";
 
 const originalLog = console.log;
 console.log = (...data: any[]) => {
@@ -7,9 +7,9 @@ console.log = (...data: any[]) => {
 }
 
 async function main() {
-  const client = new AgentRPCClient({ url: 'ws://localhost:6000', endpoint: 'myagent' });
+  const client = new FlowClient({ url: 'ws://localhost:6000', endpoint: 'myagent' });
 
-  client.onInvite(async (request: AgentRequest) => {
+  client.onInvite(async (request: Request) => {
     console.log(`Received invite for dialog: ${request.did}`);
     try {
       // Accept the dialog
