@@ -59,4 +59,4 @@ bun run examples/read_dtmf.ts
 
 ## Debuging 
 
-Use `DEBUG=diagox-agent-sdk` to have logging from SDK.
+Use `DEBUG=diagox-flow-sdk` to have logging from SDK.

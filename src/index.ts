@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import debug from 'debug';
 
 
-// Use DEBUG=diagox-agent-sdk to have logging
-const _log = debug('diagox-agent-sdk');
+// Use DEBUG=diagox-flow-sdk to have logging
+const _log = debug('diagox-flow-sdk');
 const log = (...data: any[]) => {
   const timestamp = new Date().toISOString();
   _log(timestamp, ...data);
