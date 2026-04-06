@@ -1,7 +1,7 @@
 {
-  "name": "@emiago/diagox-agent-sdk",
+  "name": "@emiago/diagox-flow-sdk",
   "version": "0.1.0",
-  "description": "Official SDK for Diagox Agent RPC API",
+  "description": "Official SDK for Diagox Flow RPC API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -33,7 +33,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/emiago/diagox-agent-sdk-js.git"
+    "url": "git+https://github.com/emiago/diagox-flow-sdk-js.git"
   },
   "devDependencies": {
     "@types/bun": "latest",
