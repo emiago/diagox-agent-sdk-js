@@ -1,6 +1,6 @@
 import { join } from "path";
-import { FlowClient, Request } from "../src/index";
-import { writeFileSync, WriteFileOptions } from "fs"
+import { FlowClient, type Request } from "../src/index";
+import { writeFileSync } from "fs"
 
 const originalLog = console.log;
 console.log = (...data: any[]) => {

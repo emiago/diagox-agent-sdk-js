@@ -1,4 +1,4 @@
-import { FlowClient, Request } from "../src/index";
+import { FlowClient, type Request } from "../src/index";
 
 const originalLog = console.log;
 console.log = (...data: any[]) => {
